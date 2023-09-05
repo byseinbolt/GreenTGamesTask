@@ -9,8 +9,7 @@ public class UnitsController : IInitializable
 {
     [Inject]
     private List<GameUnit> _gameUnits = new();
-
-
+    
     public void Initialize()
     {
         //4.1
