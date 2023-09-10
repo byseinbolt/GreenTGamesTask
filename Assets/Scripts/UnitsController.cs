@@ -7,8 +7,12 @@ using Zenject;
 
 public class UnitsController : IInitializable
 {
-    [Inject]
-    private List<GameUnit> _gameUnits = new();
+    private readonly List<GameUnit> _gameUnits;
+
+    public UnitsController(List<GameUnit> gameUnits)
+    {
+        _gameUnits = gameUnits;
+    }
     
     public void Initialize()
     {
