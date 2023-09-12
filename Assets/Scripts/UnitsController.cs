@@ -5,55 +5,57 @@ using UniRx;
 using UnityEngine;
 using Zenject;
 
-public class UnitsController : IInitializable
+public class UnitsController : IInitializable, IDisposable
 {
-    private readonly List<GameUnit> _gameUnits;
+    private readonly UnitsCreator _unitsCreator;
+    private readonly CompositeDisposable _subscriptions;
+    private IEnumerable<GameUnit> _units;
 
-    public UnitsController(List<GameUnit> gameUnits)
+    public UnitsController(UnitsCreator unitsCreator)
     {
-        _gameUnits = gameUnits;
+        _unitsCreator = unitsCreator;
+        _subscriptions = new CompositeDisposable();
     }
-    
+
     public void Initialize()
     {
-        //4.1
-        var streams = _gameUnits.Select(gameUnit => Observable.Range(1,gameUnit.Health)).ToList();
-        
-        //4.2
-        streams.Merge().Subscribe(value => Debug.Log(value));
+        _units = _unitsCreator.GetUnits();
 
-        // 5.1
-        var stream = GetUnitsStream();
+        Debug.Log("<color=red><b>Task 4</b></color>");
 
-        //5.2
-        var gameUnitsStreams = stream.SelectMany(gameUnits => gameUnits.ToObservable());
+        var streams = _units.Select(unit => unit.Health);
+        streams
+            .Merge()
+            .Subscribe(value => Debug.Log(value))
+            .AddTo(_subscriptions);
 
-        // 5.3,5.4
-        gameUnitsStreams.Subscribe(gameUnit =>
-        {
-            Observable.Return(gameUnit.Health)
-                .Subscribe(value => Debug.Log($"{gameUnit.Name} - {value}"))
-                .Dispose();
-        });
+        Debug.Log("<color=red><b>Task 5</b></color>");
 
-        //6.1
-        var filteredStream = stream
-            .Select(models => models
-                .Where(model => model.Health > 2));
-        
-        //6.2,6.3
-        filteredStream.Where(models => models.Count() >= 2)
-            .Subscribe(models =>
-            {
-                foreach (var model in models)
-                {
-                    Debug.Log($"{model.Name} - {model.Health}");
-                }
-            });
+        var stream = Observable.Return(_units);
+
+        stream
+            .Select(collection => collection.Select(unit => unit.Health).Merge())
+            .Switch()
+            .Subscribe(value => Debug.Log(value))
+            .AddTo(_subscriptions);
+
+        Debug.Log("<color=red><b>Task 6</b></color>");
+
+        var observable = stream
+            .Select(collection => collection.Where(unit => unit.Health.Value > 2))
+            .Where(collection => collection.Any());
+
+        observable
+            .Select(collection => collection.Select(unit => unit.Health).Merge())
+            .Switch()
+            .Subscribe(hp => Debug.Log($" HP: {hp}"))
+            .AddTo(_subscriptions);
     }
 
-    private IObservable<IEnumerable<GameUnit>> GetUnitsStream()
+    public void Dispose()
     {
-        return Observable.Return(_gameUnits);
+        Debug.Log("Dispose");
+        _subscriptions?.Dispose();
+
     }
 }

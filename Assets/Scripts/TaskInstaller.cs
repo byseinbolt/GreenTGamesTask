@@ -1,19 +1,11 @@
-﻿using System.Collections.Generic;
-using Zenject;
+﻿using Zenject;
 
-public class TaskInstaller : Installer<TaskInstaller>
-{
-    // 1
-    public override void InstallBindings()
+    public class TaskInstaller : Installer<TaskInstaller>
     {
-        Container.BindInterfacesAndSelfTo<UnitsController>()
-            .AsSingle()
-            .WithArguments(new List<GameUnit>
+        public override void InstallBindings()
         {
-            new ("Archer",1),
-            new ("Mage",2),
-            new ("Knight",4),
-            new ("Ork",3)
-        });
+            Container.Bind<UnitsCreator>().AsSingle();
+            Container.BindInterfacesAndSelfTo<UnitsController>().AsSingle();
+            Container.BindFactory<int, GameUnit, GameUnit.UnitsFactory>();
+        }
     }
-}

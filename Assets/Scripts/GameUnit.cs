@@ -1,12 +1,17 @@
-﻿public class GameUnit
-{
-    public string Name { get; }
-    
-    public int Health { get; }
+﻿using UniRx;
+using Zenject;
 
-    public GameUnit(string name, int health)
+public class GameUnit
+{
+    public IReadOnlyReactiveProperty<int> Health { get; }
+
+    public GameUnit(int health)
     {
-        Name = name;
-        Health = health;
+        Health = new ReactiveProperty<int>(health);
+    }
+    
+    public class UnitsFactory : PlaceholderFactory<int,GameUnit>
+    {
+        
     }
 }
